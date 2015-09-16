@@ -1,0 +1,3 @@
+#!/bin/bash
+
+nc -k -l 45454 # use any cool port
