@@ -1,0 +1,87 @@
+#!/bin/bash
+
+################################################################################
+##### SOME STYLES ##############################################################
+################################################################################
+CBOLD="\e[1m"
+CDIM="\e[2m"
+CUNDER="\e[4m"
+CBLINK="\e[5m"
+CREVERSE="\e[7m"
+
+CBLACK="\e[30m"
+CRED="\e[31m"
+CGREEN="\e[32m"
+CYELLOW="\e[33m"
+CBLUE="\e[34m"
+CMAGENTA="\e[35m"
+CCYAN="\e[36m"
+CLGREY="\e[37m"
+CDGREY="\e[90m"
+CLRED="\e[91m"
+CLGREEN="\e[92m"
+CLYELLOW="\e[93m"
+CLBLUE="\e[94m"
+CLMAGENTA="\e[95m"
+CLCYAN="\e[96m"
+CWHITE="\e[97m"
+
+CBBLACK="\e[40m"
+CBRED="\e[41m"
+CBGREEN="\e[42m"
+CBYELLOW="\e[43m"
+CBBLUE="\e[44m"
+CBMAGENTA="\e[45m"
+CBCYAN="\e[46m"
+CBLGREY="\e[47m"
+CBDGREY="\e[100m"
+CBLRED="\e[101m"
+CBLGREEN="\e[102m"
+CBLYELLOW="\e[103m"
+CBLBLUE="\e[104m"
+CBLMAGENTA="\e[105m"
+CBLCYAN="\e[106m"
+CBWHITE="\e[107m"
+
+CLR="\e[0m"
+################################################################################
+
+NAME=`who -m | awk '{print $1;}'`;
+CHATLIST="/afs/ericpol.int/home/x/m/xmik/pub/chat.list";
+TIMESTAMP="["$CLGREY`date +%T`$CLR"]"
+PORT=45454
+
+################################################################################
+
+case "$1" in
+	"-w"	) 
+		while IFS='' read -r line || [[ -n "$line" ]]; do
+			addr=`echo $line | awk '{print $1;}'`;
+			usr=`echo $line | awk '{print $2;}'`;
+			if [ $usr == $2 ]; then 
+				# sent to user ### $CUNDER$CBOLD$usr$CLR
+				echo -e $TIMESTAMP$CLMAGENTA$NAME\
+					$CLMAGENTA"wispers"$CLR":"\
+					$CLMAGENTA${@:3}$CLR\
+					| nc "$addr" $PORT
+			fi 
+			if [ $usr == $NAME ]; then 
+				# send to me
+				echo -e $TIMESTAMP$CLMAGENTA$NAME\
+					$CLMAGENTA"wispers to "$CLR$CLMAGENTA$CUNDER$2$CLR":"\
+					$CLMAGENTA${@:3}$CLR\
+					| nc "$addr" $PORT
+			fi
+		done < "$CHATLIST";;
+	"-s"	) 
+		while IFS='' read -r line || [[ -n "$line" ]]; do
+		    echo -e $TIMESTAMP$CRED$CDIM$NAME$CBLINK$CRED" SHOUTING"$CLR": "$CRED$CDIM${@:2}$CLR\
+		    	| nc "$line" $PORT
+		    #echo -e $CRED"Text sent to: $line"$CLR
+		done < "$CHATLIST";;
+	*	) 
+		while IFS='' read -r line || [[ -n "$line" ]]; do
+		    echo -e $TIMESTAMP$NAME": "$* | nc "$line" $PORT
+		    #echo -e $CRED"Text sent to: $line"$CLR
+		done < "$CHATLIST";;
+esac
