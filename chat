@@ -1,7 +1,62 @@
 #!/bin/bash
 
-# v0.3
+# v0.4
 # (c) Maksim Mikhalchuk (maksim.mikhalchuk@gmail.com)
 
-echo ====\ `date`\ ==== >> ~/chat.log
-nc -k -l 45454 | tee -a ~/chat.log
+################################################################################
+##### SOME STYLES ##############################################################
+################################################################################
+CBOLD="\e[1m"
+CDIM="\e[2m"
+CUNDER="\e[4m"
+CBLINK="\e[5m"
+CREVERSE="\e[7m"
+
+CBLACK="\e[30m"
+CRED="\e[31m"
+CGREEN="\e[32m"
+CYELLOW="\e[33m"
+CBLUE="\e[34m"
+CMAGENTA="\e[35m"
+CCYAN="\e[36m"
+CLGREY="\e[37m"
+CDGREY="\e[90m"
+CLRED="\e[91m"
+CLGREEN="\e[92m"
+CLYELLOW="\e[93m"
+CLBLUE="\e[94m"
+CLMAGENTA="\e[95m"
+CLCYAN="\e[96m"
+CWHITE="\e[97m"
+
+CBBLACK="\e[40m"
+CBRED="\e[41m"
+CBGREEN="\e[42m"
+CBYELLOW="\e[43m"
+CBBLUE="\e[44m"
+CBMAGENTA="\e[45m"
+CBCYAN="\e[46m"
+CBLGREY="\e[47m"
+CBDGREY="\e[100m"
+CBLRED="\e[101m"
+CBLGREEN="\e[102m"
+CBLYELLOW="\e[103m"
+CBLBLUE="\e[104m"
+CBLMAGENTA="\e[105m"
+CBLCYAN="\e[106m"
+CBWHITE="\e[107m"
+
+CLR="\e[0m"
+################################################################################
+
+LOGFILE=~/chat_dev.log
+
+echo ====\ `date`\ ==== >> $LOGFILE
+while true;
+do
+	RES_LINE="$(nc -l 45455)"
+	TIMESTAMP="["`date +%T`"]"
+	CTIMESTAMP="["$CLGREY`date +%T`$CLR"]"
+	echo -e $TIMESTAMP$RES_LINE >> $LOGFILE
+	echo -e $CTIMESTAMP$RES_LINE
+done
