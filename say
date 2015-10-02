@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# v0.3
+# v0.4
 # (c) Maksim Mikhalchuk (maksim.mikhalchuk@gmail.com)
 
 ################################################################################
@@ -49,42 +49,106 @@ CBWHITE="\e[107m"
 CLR="\e[0m"
 ################################################################################
 
-NAME=`who -m | awk '{print $1;}'`;
+declare -A IP_ARR;
+
+MY_NAME=`whoami`;
 CHATLIST="/afs/ericpol.int/home/x/m/xmik/pub/chat.list";
-TIMESTAMP="["$CLGREY`date +%T`$CLR"]"
-PORT=45454
+PORT=45455
+	# range:
+	# TODO try ssh
+OUTTYPE=0
+	# 0 - normal
+	# 1 - shouting
+	# 2 - wispering
+LINE_START="> ";
 
 ################################################################################
+clear;
+echo "Welcome to the Chat! Here are the users:"
+# IP adress array
+while IFS='' read -r IP_LINE || [[ -n "$IP_LINE" ]]; do
+	addr=`echo $IP_LINE | awk '{print $1;}'`;
+	usr=`echo $IP_LINE | awk '{print $2;}'`;
+	IP_ARR[$usr]=$addr;
+	echo -e $CGREEN$usr" "$CLGREY${IP_ARR[$usr]}$CLR;
+done < "$CHATLIST";
+MY_IP=${IP_ARR[$MY_NAME]};
+echo "Say hello to everyone!"
 
-case "$1" in
-	"-w"	) 
-		while IFS='' read -r line || [[ -n "$line" ]]; do
-			addr=`echo $line | awk '{print $1;}'`;
-			usr=`echo $line | awk '{print $2;}'`;
-			if [ $usr == $2 ]; then 
-				# sent to user ### $CUNDER$CBOLD$usr$CLR
-				echo -e $TIMESTAMP$CLMAGENTA$NAME\
-					$CLMAGENTA"wispers"$CLR":"\
-					$CLMAGENTA${@:3}$CLR\
-					| nc "$addr" $PORT
-			fi 
-			if [ $usr == $NAME ]; then 
-				# send to me
-				echo -e $TIMESTAMP$CLMAGENTA$NAME\
-					$CLMAGENTA"wispers to "$CLR$CLMAGENTA$CUNDER$2$CLR":"\
-					$CLMAGENTA${@:3}$CLR\
-					| nc "$addr" $PORT
-			fi
-		done < "$CHATLIST";;
-	"-s"	) 
-		while IFS='' read -r line || [[ -n "$line" ]]; do
-		    echo -e $TIMESTAMP$CRED$CDIM$NAME$CBLINK$CRED" SHOUTING"$CLR": "$CRED$CDIM${@:2}$CLR\
-		    	| nc "$line" $PORT
-		    #echo -e $CRED"Text sent to: $line"$CLR
-		done < "$CHATLIST";;
-	*	) 
-		while IFS='' read -r line || [[ -n "$line" ]]; do
-		    echo -e $TIMESTAMP$NAME": "$* | nc "$line" $PORT
-		    #echo -e $CRED"Text sent to: $line"$CLR
-		done < "$CHATLIST";;
-esac
+# for i in "${!array[@]}"
+# do
+#   echo "key  : $i"
+#   echo "value: ${array[$i]}"
+# done
+
+while true;
+do
+	echo -ne $LINE_START
+	read TEXTLINE;
+		# XXX Fix the arrow keys codes in the chat
+	clear;
+	
+	case $TEXTLINE in
+		"/w") #OUTTYPE=2
+			echo -ne $CMAGENTA"wisper to ( "
+			echo -ne ${!IP_ARR[@]}" ";
+			echo -ne ") >"
+			read TEXTLINE;
+			echo;
+			LINE_START=$CLMAGENTA"wisper to "$CUNDER"somebody"$CLR$CLMAGENTA"> "
+			continue;;
+		"/s") OUTTYPE=1
+			LINE_START=$CRED$CDIM"SHOUT> "
+			continue;;
+		"/n") OUTTYPE=0
+			LINE_START=$CLR"> "
+			continue;;
+		"")	continue;;
+	esac
+	
+
+	# OUTPUT
+	case $OUTTYPE in
+		0)
+			### NORMAL OUTPUT ###
+			while IFS='' read -r IP_ADDR || [[ -n "$IP_ADDR" ]]; do
+				echo -e $MY_NAME": "$TEXTLINE$CLR | nc "$IP_ADDR" $PORT;
+			done < "$CHATLIST";;
+			#####################
+		1)
+			### SHOUTING ###
+			while IFS='' read -r IP_ADDR || [[ -n "$IP_ADDR" ]]; do
+				echo -e $CRED$CDIM$MY_NAME$CBLINK$CRED" SHOUTING"$CLR": "$CRED$CDIM$TEXTLINE$CLR\
+				| nc "$IP_ADDR" $PORT
+			done < "$CHATLIST";;
+			################
+		2)
+			### WISPERING ###
+			while IFS='' read -r IP_ADDR || [[ -n "$IP_ADDR" ]]; do
+				addr=`echo $IP_ADDR | awk '{print $1;}'`;
+				usr=`echo $IP_ADDR | awk '{print $2;}'`;
+				if [ $usr == $2 ]; then 
+					# sent to user ### $CUNDER$CBOLD$usr$CLR
+					echo -e $CLMAGENTA$MY_NAME\
+						$CLMAGENTA"wispers"$CLR":"\
+						$CLMAGENTA$TEXTLINE$CLR\
+						| nc "$addr" $PORT
+				fi 
+				if [ $usr == $MY_NAME ]; then 
+					# send to me
+					echo -e $CLMAGENTA$MY_NAME\
+						$CLMAGENTA"wispers to "$CLR$CLMAGENTA$CUNDER$2$CLR":"\
+						$CLMAGENTA$TEXTLINE$CLR\
+						| nc "$addr" $PORT
+				fi
+			done < "$CHATLIST";;
+			#################
+		*)
+			# do nothing
+			;;
+	esac
+	
+	
+	
+	clear;
+done
